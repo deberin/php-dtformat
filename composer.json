@@ -1,0 +1,38 @@
+{
+    "name": "deberin/php-dtformat",
+    "description": "Detect and convert date/time strings across 21+ formats: ISO 8601, Unix timestamp, RFC 3339/2822, Excel serial, Julian date, Windows Filetime, .NET Ticks, GPS time, and more.",
+    "keywords": ["date", "datetime", "detect", "parse", "convert", "iso8601", "unix-timestamp", "rfc3339", "excel", "julian"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "deberin",
+            "homepage": "https://github.com/deberin"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "nesbot/carbon": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "suggest": {
+        "ext-intl": "Required for TextDateParser multi-locale support"
+    },
+    "autoload": {
+        "psr-4": {
+            "DTFormat\\PhpDtformat\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DTFormat\\PhpDtformat\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
