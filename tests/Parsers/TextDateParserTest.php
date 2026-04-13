@@ -30,6 +30,8 @@ class TextDateParserTest extends TestCase
         return [
             'MMM-dd-yyyy time' => ['Oct-10-2024 00:00:00', '2024-10-10'],
             'MMM dd, yyyy time' => ['Dec 31, 2019 23:59:59', '2019-12-31'],
+            'month day, year @ time with milliseconds' => ['Mar 21, 2026 @ 14:20:33.500', '2026-03-21'],
+            'month day, year @ time 2' => ['Apr 1, 2026 @ 16:06:22.469', '2026-04-01'],
             'month day ordinal' => ['16th January 2026', '2026-01-16'],
             'month ordinal year, time' => ['January 16th 2026, 11:40:48 pm', '2026-01-16'],
             'weekday, month dd, time' => ['Friday, 16 January 2026, 11:40:48 pm', '2026-01-16'],

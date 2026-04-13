@@ -111,8 +111,10 @@ class TextDateParser implements ParserInterface
 
     private function tryDirectParse(string $input): ?ParseResult
     {
+        $normalized = preg_replace('/\s+@\s+/', ' ', $input) ?? $input;
+
         try {
-            $carbon = Carbon::parse($input);
+            $carbon = Carbon::parse($normalized);
             if ($carbon !== false) {
                 return $this->buildResult($input, $carbon);
             }

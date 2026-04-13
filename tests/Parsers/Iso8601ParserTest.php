@@ -50,6 +50,13 @@ class Iso8601ParserTest extends TestCase
             'with offset minus' => ['2025-12-28T19:06:45-05:00'],
             'with offset no colon' => ['2025-12-28T19:06:45+0300'],
             'with milliseconds' => ['2026-03-13T07:34:19.867+03:00'],
+            'with microseconds and offset' => ['2020-01-28 09:55:41.428347+00:00'],
+            'with 7-digit fraction and offset' => ['2026-04-13 08:00:00.0000000+00:00'],
+            'single minute digit in offset' => ['2026-03-23T13:50:38.0834137+00:0'],
+            'Z with trailing offset' => ['2024-03-29T14:46:03Z+05:30'],
+            'Z with hour-only offset' => ['2026-04-06T23:59:59.000Z+10'],
+            'Z with single-digit hour offset' => ['2026-04-06T10:25:25Z+1'],
+            'single-digit hour with minutes offset' => ['2026-03-02T06:00+1:00'],
             'lowercase t and z with ms' => ['2025-12-09t08:41:54.817z'],
         ];
     }
@@ -68,6 +75,9 @@ class Iso8601ParserTest extends TestCase
         return [
             'T separator' => ['2025-12-28T19:06:45'],
             'space separator' => ['2025-12-28 19:06:45'],
+            'T separator with microseconds' => ['2025-12-09T15:39:11.089638'],
+            'T separator with 7-digit fraction' => ['2026-03-06T01:14:49.0367591'],
+            'space separator with 7-digit fraction' => ['2026-03-25 18:30:00.0000000'],
         ];
     }
 
@@ -102,6 +112,27 @@ class Iso8601ParserTest extends TestCase
         $result = $this->parser->parse('  2025-12-28  ');
         $this->assertNotNull($result);
         $this->assertSame('2025-12-28', $result->carbon->format('Y-m-d'));
+    }
+
+    #[DataProvider('edgeNoiseIsoProvider')]
+    public function test_parses_iso_with_edge_noise(string $input, string $expectedIsoPrefix): void
+    {
+        $result = $this->parser->parse($input);
+        $this->assertNotNull($result, "Input should parse after edge-noise normalization: {$input}");
+        $this->assertSame('iso-8601', $result->formatSlug);
+        $this->assertStringStartsWith($expectedIsoPrefix, $result->carbon->toIso8601String());
+    }
+
+    public static function edgeNoiseIsoProvider(): array
+    {
+        return [
+            'trailing parenthesis' => ['2026-03-21T12:56:03.264+00:00)', '2026-03-21T12:56:03'],
+            'leading bracket' => ['[2026-08-01T00:00:00', '2026-08-01T00:00:00'],
+            'single quotes around input' => ["'2023-05-01T00:00:00Z'", '2023-05-01T00:00:00'],
+            'double quotes around input' => ['"2026-03-16T12:00:00.000-07:00"', '2026-03-16T12:00:00'],
+            'dangling trailing quote' => ['2026-03-24T05:00:00-04:00"', '2026-03-24T05:00:00'],
+            'leading colon' => [':2025-12-05 15:46:04.838 +00', '2025-12-05T15:46:04'],
+        ];
     }
 
     #[DataProvider('invalidOrTypoProvider')]

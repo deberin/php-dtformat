@@ -9,18 +9,21 @@ use Throwable;
 
 class Iso8601Parser implements ParserInterface
 {
+    /** Common wrappers/noise around copied ISO strings in logs/text. */
+    private const EDGE_NOISE_CHARS = " \t\n\r\0\x0B'\"[]()";
+
     /** ISO 8601 date-time: year, optional month/day, optional time and offset. */
-    private const REGEX_DATETIME = '/^(?P<year>\d{4})(?P<m1>-?)(?P<month>\d{2})?(?P<m2>-?)(?P<day>\d{2})?(?P<time_sep>[Tt\s])?(?P<hour>\d{1,2})?(?P<minute>:\d{2})?(?P<second>:\d{2})?(?P<frac>\.\d{1,3})?(?P<offset>[Zz]|[+-]\d{2}:?\d{2})?$/';
+    private const REGEX_DATETIME = '/^(?P<year>\d{4})(?P<m1>-?)(?P<month>\d{2})?(?P<m2>-?)(?P<day>\d{2})?(?P<time_sep>[Tt\s])?(?P<hour>\d{1,2})?(?P<minute>:\d{2})?(?P<second>:\d{2})?(?P<frac>\.\d{1,9})?(?P<offset>[Zz]|[+-]\d{2}(?::?\d{2})?)?$/';
 
     /** Time only: optional T, hours:minutes:seconds. */
-    private const REGEX_TIME_ONLY = '/^(?P<time_sep>[Tt])?(?P<hour>\d{1,2})(?P<minute>:\d{2})(?P<second>:\d{2})?(?P<frac>\.\d{1,3})?(?P<offset>[Zz]|[+-]\d{2}:?\d{2})?$/';
+    private const REGEX_TIME_ONLY = '/^(?P<time_sep>[Tt])?(?P<hour>\d{1,2})(?P<minute>:\d{2})(?P<second>:\d{2})?(?P<frac>\.\d{1,9})?(?P<offset>[Zz]|[+-]\d{2}(?::?\d{2})?)?$/';
 
     /** Compact ISO: YYYYMMDDThhmmss with optional Z/offset (no colons in the time part). */
     private const REGEX_COMPACT_DATETIME = '/^\d{8}[Tt]\d{6}([Zz]|[+-]\d{2}:?\d{2})?$/';
 
     public function parse(string $input): ?ParseResult
     {
-        $trimmed = trim($input);
+        $trimmed = $this->normalizeInput($input);
         if ($trimmed === '') {
             return null;
         }
@@ -64,6 +67,45 @@ class Iso8601Parser implements ParserInterface
         $segments = $this->buildSegmentsFromInput($trimmed);
 
         return new ParseResult($carbon, 'iso-8601', $mask, $segments, $presentKeys);
+    }
+
+    private function normalizeInput(string $input): string
+    {
+        $normalized = trim($input);
+
+        // Strip common edge wrappers (quotes/brackets/parentheses) and
+        // single leading colon often seen in prefixed log tokens.
+        $normalized = trim($normalized, self::EDGE_NOISE_CHARS);
+        $normalized = ltrim($normalized, ':');
+        $normalized = preg_replace('/\s+([Zz]|[+-]\d{2}(?::?\d{2})?)$/', '$1', $normalized) ?? $normalized;
+        $normalized = preg_replace('/[Zz]\s*([+-]\d{1,2}(?::?\d{1,2})?)$/', '$1', $normalized) ?? $normalized;
+        $normalized = $this->normalizeShortTrailingOffset($normalized);
+
+        return trim($normalized, self::EDGE_NOISE_CHARS);
+    }
+
+    private function normalizeShortTrailingOffset(string $input): string
+    {
+        $hasTimePart = preg_match('/(?:[Tt]|\s)\d{1,2}:\d{2}/', $input) === 1
+            || preg_match('/^[Tt]?\d{1,2}:\d{2}/', $input) === 1;
+        if (! $hasTimePart) {
+            return $input;
+        }
+
+        if (preg_match('/([+-])(\d{1,2}):(\d{1,2})$/', $input, $m)) {
+            $hours = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+            $minutes = str_pad($m[3], 2, '0', STR_PAD_LEFT);
+
+            return substr($input, 0, -strlen($m[0])) . $m[1] . $hours . ':' . $minutes;
+        }
+
+        if (preg_match('/([+-])(\d{1,2})$/', $input, $m)) {
+            $hours = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+
+            return substr($input, 0, -strlen($m[0])) . $m[1] . $hours . ':00';
+        }
+
+        return $input;
     }
 
     /**
@@ -204,10 +246,11 @@ class Iso8601Parser implements ParserInterface
                 $keys[] = 'second';
             }
         }
-        if (preg_match('/\.\d{1,3}([Zz]|[+-]|$)/', $input)) {
+        if (preg_match('/\.\d{1,9}([Zz]|[+-]|$)/', $input)) {
             $keys[] = 'millisecond';
         }
-        if (preg_match('/[Zz]$/', $input) || preg_match('/[+-]\d{2}:?\d{2}$/', $input)) {
+        if (preg_match('/(?:[Tt]|\s)\d{1,2}:\d{2}(?::\d{2})?(?:\.\d{1,9})?([Zz]|[+-]\d{2}(?::?\d{2})?)$/', $input)
+            || preg_match('/^[Tt]?\d{1,2}:\d{2}(?::\d{2})?(?:\.\d{1,9})?([Zz]|[+-]\d{2}(?::?\d{2})?)$/', $input)) {
             $keys[] = 'offset';
         }
 
@@ -217,7 +260,7 @@ class Iso8601Parser implements ParserInterface
     private function detectMask(string $input): string
     {
         if (preg_match('/^\d{4}-\d{2}-\d{2}([Tt]|\s)/', $input)) {
-            return preg_match('/[Zz]$/', $input) || preg_match('/[+-]\d{2}:?\d{2}$/', $input)
+            return preg_match('/(?:[Tt]|\s)\d{1,2}:\d{2}(?::\d{2})?(?:\.\d{1,9})?([Zz]|[+-]\d{2}(?::?\d{2})?)$/', $input)
                 ? 'date_time_tz'
                 : 'date_time_utc';
         }
