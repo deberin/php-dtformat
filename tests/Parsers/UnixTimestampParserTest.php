@@ -62,6 +62,29 @@ class UnixTimestampParserTest extends TestCase
         $this->assertSame(1735408005, $result->carbon->timestamp);
     }
 
+    #[DataProvider('fractionalSecondsProvider')]
+    public function test_parses_fractional_seconds(string $input, int $expectedSeconds, int $expectedMs): void
+    {
+        $result = $this->parser->parse($input);
+        $this->assertNotNull($result);
+        $this->assertSame('unix-timestamp', $result->formatSlug);
+        $this->assertSame('fractional', $result->mask);
+        $this->assertSame($expectedSeconds, $result->carbon->timestamp);
+        $this->assertSame($expectedMs, $result->carbon->millisecond);
+    }
+
+    public static function fractionalSecondsProvider(): array
+    {
+        return [
+            '1 decimal place' => ['1735408005.1', 1735408005, 100],
+            '2 decimal places' => ['1735408005.12', 1735408005, 120],
+            '3 decimal places' => ['1735408005.123', 1735408005, 123],
+            '4 decimal places' => ['1777736011.2019', 1777736011, 201],
+            '0 decimal places' => ['1735408005.0', 1735408005, 0],
+            'trailing zeros' => ['1780333200.000000', 1780333200, 0],
+        ];
+    }
+
     #[DataProvider('invalidOrTypoProvider')]
     public function test_returns_null_on_invalid_or_typo(string $input): void
     {
@@ -76,14 +99,12 @@ class UnixTimestampParserTest extends TestCase
             'only spaces' => ['   '],
             'letter in middle' => ['1735408a05'],
             'leading minus' => ['-1735408005'],
-            'decimal point' => ['1735408005.0'],
             'space inside' => ['173 5408005'],
             'too long 14 digits' => ['17354080050000'],
             'too long 20 digits' => ['17354080050000000000'],
             'mixed alphanumeric' => ['1735408005abc'],
             'only letters' => ['abcdefghij'],
             'hex looking' => ['0xdeadbeef'],
-            'float string' => ['1735408005.5'],
         ];
     }
 

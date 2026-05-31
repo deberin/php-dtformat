@@ -73,6 +73,11 @@ class Iso8601Parser implements ParserInterface
     {
         $normalized = trim($input);
 
+        // Handle urlencoded ISO 8601 strings like 2026-05-04T10%3A44%3A46Z
+        if (str_contains($normalized, '%3A') || str_contains($normalized, '%3a')) {
+            $normalized = urldecode($normalized);
+        }
+
         // Strip common edge wrappers (quotes/brackets/parentheses) and
         // single leading colon often seen in prefixed log tokens.
         $normalized = trim($normalized, self::EDGE_NOISE_CHARS);

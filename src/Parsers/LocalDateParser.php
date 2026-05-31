@@ -46,11 +46,29 @@ class LocalDateParser implements ParserInterface
         'Y/m/d H:i:s',
         'Y/m/d H:i',
         'Y/m/d',
+        'Y/m',
         'Y/n/j H:i:s O',
         'Y/n/j H:i:s P',
         'Y/n/j H:i:s',
         'Y/n/j H:i',
         'Y/n/j',
+        'j/n/Y, H:i',
+
+        // Dash and Space variants
+        'Y-n-j',
+        'Y n j',
+        'Y-m-d, H:i:s',
+        'Y-m-d H:i:s T',
+        'Y-m-d H:i:s.u T',
+        'Y-m-d H:i:s.v T',
+        'Y-m-d H:i:s.u O T',
+        'Y-m-d\TH_i_s',
+        'Y-m-d_H.i.s',
+        'Y-m-d Hisv',
+        
+        // Dot variants with space
+        'j. n. Y',
+        'd.m.Y, H:i',
 
         // Colon date variants: YYYY:MM:DD ...
         'Y:m:d H:i:s',
@@ -60,6 +78,9 @@ class LocalDateParser implements ParserInterface
         'Y:m:d',
 
         // Compact timestamp-like values: yyyyMMddHHmmss.fraction[+/-offset]
+        'Ymd_His',
+        'Ymd_Hisv',
+        'YmdHis O',
         'YmdHis.u',
         'YmdHis.uO',
     ];
@@ -67,9 +88,7 @@ class LocalDateParser implements ParserInterface
     public function parse(string $input): ?ParseResult
     {
         $trimmed = trim($input);
-        $isIsoLikeYmdPrefix = preg_match('/^\d{4}-\d{2}-\d{2}/', $trimmed) === 1;
-        $isDashDotLogStyle = preg_match('/^\d{4}-\d{2}-\d{2}-\d{2}\.\d{2}\.\d{2}\.\d+$/', $trimmed) === 1;
-        if ($trimmed === '' || ($isIsoLikeYmdPrefix && ! $isDashDotLogStyle)) {
+        if ($trimmed === '') {
             return null;
         }
 
@@ -86,6 +105,11 @@ class LocalDateParser implements ParserInterface
                     // Leading '!' resets time to 00:00:00 when time is omitted from the format.
                     $carbon = Carbon::createFromFormat('!'.$format, $candidate);
                     if ($carbon !== false) {
+                        $errors = Carbon::getLastErrors();
+                        if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
+                            continue;
+                        }
+                        
                         // Compact formats: accept only if re-formatting equals input
                         // (otherwise PHP may normalize invalid parts, e.g. month 25).
                         if ($this->isCompactDateFormat($format) && $carbon->format($format) !== $candidate) {

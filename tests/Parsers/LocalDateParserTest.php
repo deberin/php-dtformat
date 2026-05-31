@@ -118,6 +118,34 @@ class LocalDateParserTest extends TestCase
         ];
     }
 
+    #[DataProvider('logFormatsProvider')]
+    public function test_parses_various_log_formats(string $input, string $expected): void
+    {
+        $result = $this->parser->parse($input);
+        $this->assertNotNull($result, "Should parse log format variant: {$input}");
+        $this->assertSame('local-date', $result->formatSlug);
+        $this->assertSame($expected, $result->carbon->format('Y-m-d H:i:s'));
+    }
+
+    public static function logFormatsProvider(): array
+    {
+        return [
+            'Y n j' => ['2022 1 2', '2022-01-02 00:00:00'],
+            'Y-n-j' => ['2022-1-2', '2022-01-02 00:00:00'],
+            'Ymd_His' => ['20240315_143000', '2024-03-15 14:30:00'],
+            'Ymd_Hisv' => ['20260425_201504186', '2026-04-25 20:15:04'],
+            'd.m.Y, H:i' => ['04.05.2026, 00:00', '2026-05-04 00:00:00'],
+            'j/n/Y, H:i' => ['13/4/2026, 07:30', '2026-04-13 07:30:00'],
+            'Y-m-d\TH_i_s' => ['2026-05-02T01_06_20', '2026-05-02 01:06:20'],
+            'YmdHis O' => ['20260509070000 +0000', '2026-05-09 07:00:00'],
+            'Y-m-d, H:i:s' => ['2025-09-28, 19:59:00', '2025-09-28 19:59:00'],
+            'Y-m-d_H.i.s' => ['2026-05-13_22.54.03', '2026-05-13 22:54:03'],
+            'Y-m-d H:i:s.u O T' => ['2026-05-19 20:00:35.877864 +0000 UTC', '2026-05-19 20:00:35'],
+            'j. n. Y' => ['21. 5. 2026', '2026-05-21 00:00:00'],
+            'Y/m' => ['2026/05', '2026-05-01 00:00:00'],
+        ];
+    }
+
     public function test_returns_null_for_text_month_formats(): void
     {
         $this->assertNull($this->parser->parse('17 March 2025'));
@@ -135,10 +163,8 @@ class LocalDateParserTest extends TestCase
     {
         return [
             'empty' => [''],
-            'iso Y-m-d' => ['2025-12-28'],
             'iso datetime' => ['2025-12-28 19:06:45'],
             'garbage' => ['not a date'],
-            'only digits' => ['20251228'],
         ];
     }
 }

@@ -23,6 +23,7 @@ use DTFormat\PhpDtformat\Formatters\TextDateFormatter;
 use DTFormat\PhpDtformat\Formatters\TireDotFormatter;
 use DTFormat\PhpDtformat\Formatters\UnixMillisecondsFormatter;
 use DTFormat\PhpDtformat\Formatters\UnixSecondsFormatter;
+use DTFormat\PhpDtformat\Formatters\WcfDateFormatter;
 use DTFormat\PhpDtformat\Parsers\ChineseDateParser;
 use DTFormat\PhpDtformat\Parsers\DotNetTicksParser;
 use DTFormat\PhpDtformat\Parsers\ExcelSerialParser;
@@ -45,6 +46,7 @@ use DTFormat\PhpDtformat\Parsers\TextDateParser;
 use DTFormat\PhpDtformat\Parsers\TireDotParser;
 use DTFormat\PhpDtformat\Parsers\UnixTimestampParser;
 use DTFormat\PhpDtformat\Parsers\UsDateParser;
+use DTFormat\PhpDtformat\Parsers\WcfDateParser;
 
 class DateDetector
 {
@@ -91,6 +93,7 @@ class DateDetector
             'gps-time' => new GpsTimeParser,
             'mongo-objectid' => new MongoObjectIdParser,
             'pdf-date' => new PdfDateParser,
+            'wcf-date' => new WcfDateParser,
         ];
     }
 
@@ -119,6 +122,7 @@ class DateDetector
             'ntp_timestamp' => new NtpTimestampFormatter,
             'gps_time' => new GpsTimeFormatter,
             'pdf_date' => new PdfDateFormatter,
+            'wcf_date' => new WcfDateFormatter,
         ];
     }
 

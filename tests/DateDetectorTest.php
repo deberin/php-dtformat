@@ -70,6 +70,13 @@ class DateDetectorTest extends TestCase
         $this->assertContains('pdf-date', $slugs);
     }
 
+    public function test_wcf_date_detected(): void
+    {
+        $results = $this->detector->detect('/Date(1777667541000+0000)/');
+        $slugs = array_map(fn (ParseResult $r) => $r->formatSlug, $results);
+        $this->assertContains('wcf-date', $slugs);
+    }
+
     public function test_multiple_formats_can_match(): void
     {
         $results = $this->detector->detect('2025-12-28T19:06:45Z');

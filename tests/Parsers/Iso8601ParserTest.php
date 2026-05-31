@@ -132,6 +132,8 @@ class Iso8601ParserTest extends TestCase
             'double quotes around input' => ['"2026-03-16T12:00:00.000-07:00"', '2026-03-16T12:00:00'],
             'dangling trailing quote' => ['2026-03-24T05:00:00-04:00"', '2026-03-24T05:00:00'],
             'leading colon' => [':2025-12-05 15:46:04.838 +00', '2025-12-05T15:46:04'],
+            'urlencoded Z' => ['2026-05-04T10%3A44%3A46Z', '2026-05-04T10:44:46'],
+            'urlencoded offset' => ['2026-05-04T10%3A44%3A46%2B03%3A00', '2026-05-04T10:44:46'],
         ];
     }
 

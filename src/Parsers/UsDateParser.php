@@ -17,6 +17,8 @@ class UsDateParser implements ParserInterface
         'mdY',
 
         // Slash-separated
+        'm/d/Y H:i:s.u',
+        'm/d/Y H:i:s.v',
         'm/d/Y H:i:s',
         'm/d/Y h:i:s A',
         'm/d/Y H:i',
@@ -42,6 +44,10 @@ class UsDateParser implements ParserInterface
             try {
                 $carbon = Carbon::createFromFormat('!' . $format, $trimmed);
                 if ($carbon !== false) {
+                    $errors = Carbon::getLastErrors();
+                    if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
+                        continue;
+                    }
                     if ($this->isCompactDateFormat($format) && $carbon->format($format) !== $trimmed) {
                         continue;
                     }
