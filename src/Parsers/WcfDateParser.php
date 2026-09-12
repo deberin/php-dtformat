@@ -17,8 +17,8 @@ class WcfDateParser implements ParserInterface
     {
         $trimmed = trim($input);
         
-        // Match /Date(1234567890)/ or \/Date(1234567890)\/ with optional timezone
-        if (!preg_match('/^\\\\?\/Date\((-?\d+)([+-]\d{4})?\)\\\\?\/$/i', $trimmed, $matches)) {
+        // Match /Date(1234567890)/ or \/Date(1234567890)\/ or Date(...) with optional timezone
+        if (!preg_match('/^(?:\\\\?\/)?Date\((-?\d+)([+-]\d{4})?\)(?:\\\\?\/)?$/i', $trimmed, $matches)) {
             return null;
         }
 

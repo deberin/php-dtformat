@@ -54,6 +54,19 @@ class PdfDateParserTest extends TestCase
     {
         $this->assertNull($this->parser->parse('not a pdf date'));
         $this->assertNull($this->parser->parse('2018092114101'));
-        $this->assertNull($this->parser->parse("20180921141013-04'00\""));
+    }
+
+    public function test_parses_pdf_date_with_quotes(): void
+    {
+        $result = $this->parser->parse("'D:20250523073731Z'");
+        $this->assertNotNull($result);
+        $this->assertSame('2025-05-23T07:37:31+00:00', $result->carbon->toIso8601String());
+    }
+
+    public function test_parses_pdf_date_with_creation_date_prefix(): void
+    {
+        $result = $this->parser->parse("/CreationDate D:20210818075032-06'00'");
+        $this->assertNotNull($result);
+        $this->assertSame('2021-08-18T07:50:32-06:00', $result->carbon->toIso8601String());
     }
 }

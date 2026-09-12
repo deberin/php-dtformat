@@ -24,6 +24,11 @@ use DTFormat\PhpDtformat\Formatters\TireDotFormatter;
 use DTFormat\PhpDtformat\Formatters\UnixMillisecondsFormatter;
 use DTFormat\PhpDtformat\Formatters\UnixSecondsFormatter;
 use DTFormat\PhpDtformat\Formatters\WcfDateFormatter;
+use DTFormat\PhpDtformat\Formatters\OracleTimestampFormatter;
+use DTFormat\PhpDtformat\Formatters\SrtTimeFormatter;
+use DTFormat\PhpDtformat\Formatters\JsDateStringFormatter;
+use DTFormat\PhpDtformat\Formatters\OdbcTimestampFormatter;
+use DTFormat\PhpDtformat\Formatters\ODataDatetimeFormatter;
 use DTFormat\PhpDtformat\Parsers\ChineseDateParser;
 use DTFormat\PhpDtformat\Parsers\DotNetTicksParser;
 use DTFormat\PhpDtformat\Parsers\ExcelSerialParser;
@@ -47,6 +52,11 @@ use DTFormat\PhpDtformat\Parsers\TireDotParser;
 use DTFormat\PhpDtformat\Parsers\UnixTimestampParser;
 use DTFormat\PhpDtformat\Parsers\UsDateParser;
 use DTFormat\PhpDtformat\Parsers\WcfDateParser;
+use DTFormat\PhpDtformat\Parsers\OracleTimestampParser;
+use DTFormat\PhpDtformat\Parsers\SrtTimeParser;
+use DTFormat\PhpDtformat\Parsers\JsDateStringParser;
+use DTFormat\PhpDtformat\Parsers\OdbcTimestampParser;
+use DTFormat\PhpDtformat\Parsers\ODataDatetimeParser;
 
 class DateDetector
 {
@@ -94,6 +104,11 @@ class DateDetector
             'mongo-objectid' => new MongoObjectIdParser,
             'pdf-date' => new PdfDateParser,
             'wcf-date' => new WcfDateParser,
+            'oracle-timestamp' => new OracleTimestampParser,
+            'srt-time' => new SrtTimeParser,
+            'js-date-string' => new JsDateStringParser,
+            'odbc-timestamp' => new OdbcTimestampParser,
+            'odata-datetime' => new ODataDatetimeParser,
         ];
     }
 
@@ -123,6 +138,11 @@ class DateDetector
             'gps_time' => new GpsTimeFormatter,
             'pdf_date' => new PdfDateFormatter,
             'wcf_date' => new WcfDateFormatter,
+            'oracle_timestamp' => new OracleTimestampFormatter,
+            'srt_time' => new SrtTimeFormatter,
+            'js_date_string' => new JsDateStringFormatter,
+            'odbc_timestamp' => new OdbcTimestampFormatter,
+            'odata_datetime' => new ODataDatetimeFormatter,
         ];
     }
 
@@ -136,6 +156,15 @@ class DateDetector
         $trimmed = trim($input);
         if ($trimmed === '') {
             return [];
+        }
+
+        // Try to unwrap JSON/CSV noise safely without altering internal structure
+        // e.g. "2026-09-11" or '2026-09-11' or "date": "2026-09-11"
+        if (preg_match('/^(?:["\']?[a-zA-Z0-9_-]+["\']?\s*:\s*)?["\'](.*?)["\']$/', $trimmed, $matches)) {
+            $cleaned = trim($matches[1]);
+            if ($cleaned !== '') {
+                $input = $cleaned;
+            }
         }
 
         $results = [];

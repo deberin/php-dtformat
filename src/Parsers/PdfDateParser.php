@@ -23,6 +23,10 @@ class PdfDateParser implements ParserInterface
 
         $segments = ParseSegmentBuilder::pdfDate($trimmed);
 
+        // Strip optional prefix and quotes
+        $trimmed = preg_replace('/^\/CreationDate\s+/', '', $trimmed);
+        $trimmed = trim($trimmed, " \t\n\r\0\x0B\"'");
+
         // Strip optional D: prefix
         if (str_starts_with($trimmed, 'D:')) {
             $trimmed = substr($trimmed, 2);

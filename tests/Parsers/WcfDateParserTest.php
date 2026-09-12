@@ -31,4 +31,16 @@ class WcfDateParserTest extends TestCase
         $this->assertNotNull($result);
         $this->assertSame(1777667541, $result->carbon->timestamp);
     }
+
+    public function test_parses_wcf_date_without_slashes(): void
+    {
+        $parser = new WcfDateParser;
+        $result = $parser->parse('Date(1456236266953)');
+        $this->assertNotNull($result);
+        $this->assertSame(1456236266, $result->carbon->timestamp);
+
+        $result2 = $parser->parse('Date(1735603200000)');
+        $this->assertNotNull($result2);
+        $this->assertSame(1735603200, $result2->carbon->timestamp);
+    }
 }

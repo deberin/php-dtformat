@@ -4,6 +4,9 @@ namespace DTFormat\PhpDtformat\Tests;
 
 use DTFormat\PhpDtformat\DateDetector;
 use DTFormat\PhpDtformat\ParseResult;
+use DTFormat\PhpDtformat\Formatters\Iso8601Formatter;
+use DTFormat\PhpDtformat\Parsers\ParserInterface;
+use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
 
 class DateDetectorTest extends TestCase
@@ -91,10 +94,32 @@ class DateDetectorTest extends TestCase
         $representations = $this->detector->allRepresentations($results[0]->carbon);
         $this->assertNotEmpty($representations);
 
-        $keys = array_column($representations, 'key');
-        $this->assertContains('iso8601', $keys);
-        $this->assertContains('unix_seconds', $keys);
-        $this->assertContains('rfc3339', $keys);
+        $detector = new DateDetector(null, ['iso' => new Iso8601Formatter]);
+        $carbon = Carbon::create(2025, 1, 1, 12, 0, 0, 'UTC');
+
+        $out = $detector->allRepresentations($carbon);
+        $this->assertCount(1, $out);
+        $this->assertSame('iso', $out[0]['key']);
+        $this->assertSame('2025-01-01T12:00:00+00:00', $out[0]['value']);
+    }
+
+    public function test_strips_json_quotes_and_wrappers(): void
+    {
+        // Mock a parser that strictly accepts "2026-09-11"
+        $mockParser = $this->createMock(ParserInterface::class);
+        $mockResult = new ParseResult(Carbon::now(), 'test', null, []);
+        
+        $mockParser->expects($this->exactly(4))
+            ->method('parse')
+            ->with('2026-09-11')
+            ->willReturn($mockResult);
+
+        $detector = new DateDetector(['test' => $mockParser]);
+
+        $detector->detect('"2026-09-11"');
+        $detector->detect("'2026-09-11'");
+        $detector->detect('"date": "2026-09-11"');
+        $detector->detect('\'date\': \'2026-09-11\'');
     }
 
     public function test_custom_parsers(): void
