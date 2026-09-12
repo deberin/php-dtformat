@@ -45,7 +45,7 @@ class OracleTimestampParser implements ParserInterface
             'minute' => 'minute',
             'second' => 'second',
             'millisecond' => 'millisecond',
-            'ampm' => 'ampm',
+            'ampm' => 'meridiem',
         ]);
 
         return new ParseResult($carbon, 'oracle-timestamp', null, $segments);

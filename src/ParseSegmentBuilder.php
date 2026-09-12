@@ -46,6 +46,8 @@ final class ParseSegmentBuilder
             $out[] = new Segment($key, $val, $start, $start + strlen($val));
         }
 
+        usort($out, fn (Segment $a, Segment $b) => $a->start <=> $b->start);
+
         return $out;
     }
 

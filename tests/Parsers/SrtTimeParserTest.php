@@ -22,6 +22,18 @@ class SrtTimeParserTest extends TestCase
         $this->assertSame('srt-time', $result->formatSlug);
         $this->assertSame('01:00:15', $result->carbon->format('H:i:s'));
         $this->assertSame(920000, $result->carbon->micro);
+        $this->assertCount(4, $result->segments);
+        
+        // Assert order (must be sorted by start)
+        $prevStart = -1;
+        foreach ($result->segments as $segment) {
+            $this->assertGreaterThanOrEqual($prevStart, $segment->start);
+            $prevStart = $segment->start;
+        }
+
+        // Assert expected keys
+        $keys = array_column($result->segments, 'key');
+        $this->assertEquals(['hour', 'minute', 'second', 'millisecond'], $keys);
     }
 
     public function test_returns_null_on_invalid_date(): void

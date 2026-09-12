@@ -21,6 +21,18 @@ class JsDateStringParserTest extends TestCase
         $this->assertNotNull($result);
         $this->assertSame('js-date-string', $result->formatSlug);
         $this->assertSame('2026-12-01T17:07:18-07:00', $result->carbon->toIso8601String());
+        $this->assertCount(8, $result->segments);
+        
+        // Assert order (must be sorted by start)
+        $prevStart = -1;
+        foreach ($result->segments as $segment) {
+            $this->assertGreaterThanOrEqual($prevStart, $segment->start);
+            $prevStart = $segment->start;
+        }
+
+        // Assert expected keys
+        $keys = array_column($result->segments, 'key');
+        $this->assertEquals(['weekday_abbr', 'month', 'day', 'year', 'hour', 'minute', 'second', 'offset'], $keys);
     }
     
     public function test_parses_js_date_string_with_extra_quotes(): void

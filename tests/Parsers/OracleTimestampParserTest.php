@@ -22,6 +22,18 @@ class OracleTimestampParserTest extends TestCase
         $this->assertSame('oracle-timestamp', $result->formatSlug);
         $this->assertSame('2017-02-14 22:31:17', $result->carbon->format('Y-m-d H:i:s'));
         $this->assertSame(447000, $result->carbon->micro);
+        $this->assertCount(8, $result->segments);
+        
+        // Assert order (must be sorted by start)
+        $prevStart = -1;
+        foreach ($result->segments as $segment) {
+            $this->assertGreaterThanOrEqual($prevStart, $segment->start);
+            $prevStart = $segment->start;
+        }
+
+        // Assert expected keys
+        $keys = array_column($result->segments, 'key');
+        $this->assertEquals(['day', 'month', 'year', 'hour', 'minute', 'second', 'millisecond', 'meridiem'], $keys);
     }
     
     public function test_parses_oracle_timestamp_without_microseconds(): void

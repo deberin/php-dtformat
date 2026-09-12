@@ -45,8 +45,8 @@ class JsDateStringParser implements ParserInterface
             'minute' => 'minute',
             'second' => 'second',
             'offset' => 'offset',
-            'zone' => 'zone',
-            'weekday' => 'weekday',
+            'zone' => 'timezone_abbr',
+            'weekday' => 'weekday_abbr',
         ]);
 
         return new ParseResult($carbon, 'js-date-string', null, $segments);
