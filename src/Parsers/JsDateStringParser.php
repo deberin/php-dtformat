@@ -13,25 +13,41 @@ class JsDateStringParser implements ParserInterface
     {
         $trimmed = trim($input, " \t\n\r\0\x0B\"'");
         
-        // JS Date.toString() format: Day Mon DD YYYY HH:mm:ss GMT+XXXX (Timezone Name)
-        // e.g., Mon Dec 01 2026 17:07:18 GMT-0700 (Pacific Daylight Time)
-        // or Sun Aug 09 14:38:59 EDT 2026
-        if (!preg_match('/^[a-z]{3}\s+[a-z]{3}\s+\d{2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s+GMT[+-]\d{4}/i', $trimmed) &&
-            !preg_match('/^[a-z]{3}\s+[a-z]{3}\s+\d{2}\s+\d{2}:\d{2}:\d{2}\s+[a-z]{3,4}\s+\d{4}/i', $trimmed) &&
-            !preg_match('/^[a-z]{3}\s+[a-z]{3}\s+\d{2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}/i', $trimmed)
-        ) {
+        $matches = [];
+        $matched = false;
+
+        // 1. Mon Dec 01 2026 17:07:18 GMT-0700
+        if (!$matched && preg_match('/^(?P<weekday>[a-z]{3})\s+(?P<month>[a-z]{3})\s+(?P<day>\d{2})\s+(?P<year>\d{4})\s+(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(?:\s+GMT(?P<offset>[+-]\d{4}))?/i', $trimmed, $matches, PREG_OFFSET_CAPTURE)) {
+            $matched = true;
+        }
+        
+        // 2. Sun Aug 09 14:38:59 EDT 2026
+        if (!$matched && preg_match('/^(?P<weekday>[a-z]{3})\s+(?P<month>[a-z]{3})\s+(?P<day>\d{2})\s+(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})\s+(?P<zone>[a-z]{3,4})\s+(?P<year>\d{4})/i', $trimmed, $matches, PREG_OFFSET_CAPTURE)) {
+            $matched = true;
+        }
+        
+        if (!$matched) {
             return null;
         }
 
         try {
-            // Carbon can generally parse this format natively, but we might need to strip the timezone name in parentheses
             $cleanString = preg_replace('/\s+\(.*\)$/', '', $trimmed);
             $carbon = Carbon::parse($cleanString);
         } catch (Throwable) {
             return null;
         }
 
-        $segments = [new Segment('js_date_string', $trimmed, 0, strlen($trimmed))];
+        $segments = \DTFormat\PhpDtformat\ParseSegmentBuilder::fromNamedMatch($matches, [
+            'year' => 'year',
+            'month' => 'month',
+            'day' => 'day',
+            'hour' => 'hour',
+            'minute' => 'minute',
+            'second' => 'second',
+            'offset' => 'offset',
+            'zone' => 'zone',
+            'weekday' => 'weekday',
+        ]);
 
         return new ParseResult($carbon, 'js-date-string', null, $segments);
     }

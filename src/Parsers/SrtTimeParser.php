@@ -15,13 +15,13 @@ class SrtTimeParser implements ParserInterface
         
         // SRT time format: HH:MM:SS,mmm
         // e.g., 01:00:15,920
-        if (!preg_match('/^(\d{2}:\d{2}:\d{2}),(\d{3})$/', $trimmed, $matches)) {
+        if (!preg_match('/^(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}),(?P<millisecond>\d{3})$/', $trimmed, $matches, PREG_OFFSET_CAPTURE)) {
             return null;
         }
 
         try {
-            $timePart = $matches[1];
-            $milliPart = $matches[2];
+            $timePart = $matches['hour'][0] . ':' . $matches['minute'][0] . ':' . $matches['second'][0];
+            $milliPart = $matches['millisecond'][0];
             
             // SRT only has time, we set date to today for consistency, or leave it as today which is Carbon's default when parsing just time.
             $carbon = Carbon::createFromFormat('H:i:s', $timePart);
@@ -30,7 +30,12 @@ class SrtTimeParser implements ParserInterface
             return null;
         }
 
-        $segments = [new Segment('srt_time', $trimmed, 0, strlen($trimmed))];
+        $segments = \DTFormat\PhpDtformat\ParseSegmentBuilder::fromNamedMatch($matches, [
+            'hour' => 'hour',
+            'minute' => 'minute',
+            'second' => 'second',
+            'millisecond' => 'millisecond',
+        ]);
 
         return new ParseResult($carbon, 'srt-time', null, $segments, ['hour', 'minute', 'second']);
     }
