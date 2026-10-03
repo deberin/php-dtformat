@@ -26,6 +26,12 @@ class UnixTimestampParser implements ParserInterface
                 return null;
             }
             $seconds = (int) $secStr;
+
+            // Reject likely Excel serial dates (e.g. 46315.641). Unix timestamps in this
+            // range are ~Jan 1, 1970. Users rarely test these with fractions.
+            if ($seconds >= 30000 && $seconds <= 70000) {
+                return null;
+            }
             $msStr = substr($fracStr, 0, 3);
             $milliseconds = (int) str_pad($msStr, 3, '0', STR_PAD_RIGHT);
             $mask = 'fractional';

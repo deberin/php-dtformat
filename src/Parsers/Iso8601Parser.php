@@ -19,7 +19,10 @@ class Iso8601Parser implements ParserInterface
     private const REGEX_TIME_ONLY = '/^(?P<time_sep>[Tt])?(?P<hour>\d{1,2})(?P<minute>:\d{2})(?P<second>:\d{2})?(?P<frac>\.\d{1,9})?(?P<offset>[Zz]|[+-]\d{2}(?::?\d{2})?)?$/';
 
     /** Compact ISO: YYYYMMDDThhmmss with optional Z/offset (no colons in the time part). */
-    private const REGEX_COMPACT_DATETIME = '/^\d{8}[Tt]\d{6}([Zz]|[+-]\d{2}:?\d{2})?$/';
+    private const REGEX_COMPACT_DATETIME = '/^\d{8}[Tt]?\d{6}([Zz]|[+-]\d{2}:?\d{2})?$/';
+
+    /** Compact ISO Date: YYYYMMDD. */
+    private const REGEX_COMPACT_DATE = '/^\d{8}$/';
 
     public function parse(string $input): ?ParseResult
     {
@@ -31,8 +34,9 @@ class Iso8601Parser implements ParserInterface
         // Purely numeric strings of length 9–10 (Unix seconds) or 13 (ms) belong to UnixTimestampParser.
         // Also reject floats (e.g. 2432187.2 — Julian date) so Carbon does not parse them as Unix seconds.
         if (preg_match('/^\d+(\.\d+)?$/', $trimmed)) {
-            // Exception: a 4-digit year only
-            if (strlen($trimmed) !== 4) {
+            // Exceptions for ISO compact formats: 4 (year), 8 (YYYYMMDD), 14 (YYYYMMDDhhmmss)
+            $len = strlen($trimmed);
+            if ($len !== 4 && $len !== 8 && $len !== 14) {
                 return null;
             }
         }
@@ -52,7 +56,8 @@ class Iso8601Parser implements ParserInterface
         // (e.g. "Mon, 28 Dec 2025..."), it is another format — do not greedily Carbon::parse().
         if (!preg_match(self::REGEX_DATETIME, $trimmed)
             && !preg_match(self::REGEX_TIME_ONLY, $trimmed)
-            && !preg_match(self::REGEX_COMPACT_DATETIME, $trimmed)) {
+            && !preg_match(self::REGEX_COMPACT_DATETIME, $trimmed)
+            && !preg_match(self::REGEX_COMPACT_DATE, $trimmed)) {
             return null;
         }
 
@@ -78,7 +83,13 @@ class Iso8601Parser implements ParserInterface
             $normalized = urldecode($normalized);
         }
 
-        // Strip common edge wrappers (quotes/brackets/parentheses) and
+        // Strip IANA Timezone brackets at the end e.g., 2026-04-12T20:30:00.635-04:00[US/Eastern]
+        $normalized = preg_replace('/\[[a-zA-Z0-9_\/+-]+\]$/', '', $normalized) ?? $normalized;
+
+        // Replace UTC or GMT suffix with Z so our regex recognizes it as UTC
+        $normalized = preg_replace('/\s+(UTC|GMT)$/i', 'Z', $normalized) ?? $normalized;
+
+        // Strip common edge wrappers (quotes/parentheses) and
         // single leading colon often seen in prefixed log tokens.
         $normalized = trim($normalized, self::EDGE_NOISE_CHARS);
         $normalized = ltrim($normalized, ':');

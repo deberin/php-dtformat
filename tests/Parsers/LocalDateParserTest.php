@@ -59,6 +59,17 @@ class LocalDateParserTest extends TestCase
         $this->assertSame(15, $c->day);
     }
 
+    public function test_parses_hyphen_eu_format(): void
+    {
+        $result = $this->parser->parse('30-06-2026');
+        $this->assertNotNull($result);
+        $this->assertSame('local-date', $result->formatSlug);
+        $c = $result->carbon;
+        $this->assertSame(2026, $c->year);
+        $this->assertSame(6, $c->month);
+        $this->assertSame(30, $c->day);
+    }
+
     #[DataProvider('slashYmdProvider')]
     public function test_parses_slash_ymd_variants(string $input, string $expectedYmd, string $expectedTime): void
     {

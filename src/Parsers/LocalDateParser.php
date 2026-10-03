@@ -40,6 +40,10 @@ class LocalDateParser implements ParserInterface
         'd/m/Y h:i A',
         'd/m/Y',
 
+        'd-m-Y H:i:s',
+        'd-m-Y H:i',
+        'd-m-Y',
+
         // Slash Y/m/d variants from logs/user input
         'Y/m/d H:i:s O',
         'Y/m/d H:i:s P',

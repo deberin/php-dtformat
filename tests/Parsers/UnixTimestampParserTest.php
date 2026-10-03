@@ -105,6 +105,7 @@ class UnixTimestampParserTest extends TestCase
             'mixed alphanumeric' => ['1735408005abc'],
             'only letters' => ['abcdefghij'],
             'hex looking' => ['0xdeadbeef'],
+            'likely excel date' => ['46315.641'],
         ];
     }
 

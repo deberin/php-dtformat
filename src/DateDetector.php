@@ -154,6 +154,15 @@ class DateDetector
     public function detect(string $input): array
     {
         $trimmed = trim($input);
+        
+        // URL decode if needed (e.g. 2026-05-04T10%3A44%3A46Z)
+        if (str_contains($trimmed, '%')) {
+            $decoded = urldecode($trimmed);
+            if ($decoded !== $trimmed) {
+                $trimmed = trim($decoded);
+            }
+        }
+
         if ($trimmed === '') {
             return [];
         }
@@ -163,9 +172,14 @@ class DateDetector
         if (preg_match('/^(?:["\']?[a-zA-Z0-9_-]+["\']?\s*:\s*)?["\'](.*?)["\']$/', $trimmed, $matches)) {
             $cleaned = trim($matches[1]);
             if ($cleaned !== '') {
-                $input = $cleaned;
+                $trimmed = $cleaned;
             }
         }
+
+        // Remove trailing punctuation like dots or slashes that users often accidentally copy
+        $trimmed = rtrim($trimmed, '.,;/\\');
+
+        $input = $trimmed;
 
         $results = [];
         foreach ($this->parsers as $parser) {

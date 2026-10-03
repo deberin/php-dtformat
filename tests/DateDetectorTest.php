@@ -109,7 +109,7 @@ class DateDetectorTest extends TestCase
         $mockParser = $this->createMock(ParserInterface::class);
         $mockResult = new ParseResult(Carbon::now(), 'test', null, []);
         
-        $mockParser->expects($this->exactly(4))
+        $mockParser->expects($this->exactly(6))
             ->method('parse')
             ->with('2026-09-11')
             ->willReturn($mockResult);
@@ -120,6 +120,24 @@ class DateDetectorTest extends TestCase
         $detector->detect("'2026-09-11'");
         $detector->detect('"date": "2026-09-11"');
         $detector->detect('\'date\': \'2026-09-11\'');
+        $detector->detect('2026-09-11.');
+        $detector->detect('2026-09-11/');
+    }
+
+    public function test_url_decodes_input(): void
+    {
+        // Mock a parser that strictly accepts "2026-05-04T10:44:46Z"
+        $mockParser = $this->createMock(ParserInterface::class);
+        $mockResult = new ParseResult(Carbon::now(), 'test', null, []);
+        
+        $mockParser->expects($this->exactly(1))
+            ->method('parse')
+            ->with('2026-05-04T10:44:46Z')
+            ->willReturn($mockResult);
+
+        $detector = new DateDetector(['test' => $mockParser]);
+
+        $detector->detect('2026-05-04T10%3A44%3A46Z');
     }
 
     public function test_custom_parsers(): void
